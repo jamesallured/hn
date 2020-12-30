@@ -1,11 +1,9 @@
-package main
+package hackernews
 
 import (
 	"encoding/json"
-	"flag"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 )
 
@@ -20,15 +18,16 @@ var sorts = map[string]string{
 	"top":  "/topstories.json",
 }
 
-func GetItemURL(id int) string {
+func getItemURL(id int) string {
 	return fmt.Sprintf(serviceBaseURL+"/item/%d.json", id)
 }
 
-func GetHackerNewsURL(id int) string {
+// GetThreadURL returns a URL for the Hacker News thread of a story.
+func GetThreadURL(id int) string {
 	return fmt.Sprintf(hackerNewsBaseURL+"/item?id=%d", id)
 }
 
-func GetStoriesURL(sort string) string {
+func getStoriesURL(sort string) string {
 	URI, ok := sorts[sort]
 	if !ok {
 		fmt.Println("[!] Specified sort not supported, reverting to default (top)")
@@ -38,29 +37,15 @@ func GetStoriesURL(sort string) string {
 	return fmt.Sprint(serviceBaseURL + URI)
 }
 
+// Story represents a Hacker News story with an ID and a title.
 type Story struct {
 	ID    int    `json:"id"`
 	Title string `json:"title"`
 }
 
-func main() {
-	sort := flag.String("sort", "top", "sort to apply to stories")
-	limit := flag.Int("n", 10, "number of stories to return (max 500)")
-	flag.Parse()
-
-	stories, err := GetStories(*limit, *sort)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for i, story := range stories {
-		fmt.Printf("%02d - %s (%s)\n", i+1, story.Title, GetHackerNewsURL(story.ID))
-	}
-}
-
 // GetStories returns a slice of stories of specified length and an error.
 func GetStories(n int, sort string) ([]Story, error) {
-	resp, err := http.Get(GetStoriesURL(sort))
+	resp, err := http.Get(getStoriesURL(sort))
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +75,7 @@ func GetStories(n int, sort string) ([]Story, error) {
 
 // GetStory returns a Story and an error given a story ID.
 func GetStory(id int) (Story, error) {
-	resp, err := http.Get(GetItemURL(id))
+	resp, err := http.Get(getItemURL(id))
 	if err != nil {
 		return Story{}, err
 	}
